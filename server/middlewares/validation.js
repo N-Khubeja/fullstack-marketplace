@@ -246,6 +246,74 @@ const UploadProduct = [
   })
 ]
 
+const UpdateProductVal = [
+  body("name")
+    .trim()
+    .optional()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Name must be between 2 and 100 characters"),
+
+  body("description")
+    .trim()
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage("Description must be less than 2000 characters"),
+
+  body("price")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("price must be a number greater than or equal to 0"),
+
+  body("category")
+    .trim()
+    .optional()
+    .custom((value) => {
+      if (!PRODUCT_CATEGORIES[value]) {
+        throw new Error("Invalid category")
+      }
+
+      return true
+    }),
+
+  body("subcategory")
+    .optional()
+    .isString()
+    .withMessage("subcategory must be a string")
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage("subcategory cannot be empty"),
+
+  body("stock")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("stock must be a non-negative integer"),
+
+  body("attributes")
+    .optional()
+    .custom((value) => {
+      if (
+        !value ||
+        typeof value !== "object" ||
+        Array.isArray(value)
+      ) {
+        throw new Error("attributes must be an object")
+      }
+
+      return true
+    }),
+
+  body("visibility")
+    .optional()
+    .isIn(["public", "private"])
+    .withMessage("visibility must be either public or private"),
+
+  body("isActive")
+    .optional()
+    .isBoolean()
+    .withMessage("isActive must be a boolean"),
+]
+
 function handleValidationErrors(req, res, next) {
     const errors = validationResult(req)
 
@@ -268,4 +336,4 @@ function handleValidationErrors(req, res, next) {
     next()
 }
 
-module.exports = { LoginValidation, RegisterValidation, PasswordChangeValidation, ProfileUpdateValidation, ForgetPasswordValidation, ResetPassword ,UploadProduct,  handleValidationErrors }
+module.exports = { LoginValidation, RegisterValidation, PasswordChangeValidation, ProfileUpdateValidation, ForgetPasswordValidation, ResetPassword ,UploadProduct, UpdateProductVal, handleValidationErrors }
