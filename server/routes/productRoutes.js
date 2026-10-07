@@ -5,18 +5,20 @@ const {
   getAllProducts,
   getOneProduct,
   createProduct,
-  getMyProducts
+  getMyProducts,
+  updateProduct
 } = require("../controllers/productController");
 
 const authMiddleware = require("../middlewares/authMiddleware")
 const uploadProdMiddleware = require("../middlewares/UploadProductMiddleware")
 const parseProductAttributes = require("../middlewares/ProductAttributes")
 
-const {handleValidationErrors,UploadProduct} = require("../middlewares/validation")
+const {handleValidationErrors,UploadProduct,UpdateProductVal} = require("../middlewares/validation")
 
 router.get("/", getAllProducts);
-router.post("/",authMiddleware,uploadProdMiddleware.array("images", 5),parseProductAttributes,UploadProduct,handleValidationErrors, createProduct);
-router.get("/products/my",authMiddleware,getMyProducts)
+router.post("/create",authMiddleware,uploadProdMiddleware.array("images", 5),parseProductAttributes,UploadProduct,handleValidationErrors, createProduct);
+router.get("/my",authMiddleware,getMyProducts)
+router.patch("/update/:slug",authMiddleware,uploadProdMiddleware.array("images", 5),parseProductAttributes,UpdateProductVal,handleValidationErrors,updateProduct)
 router.get("/:slug",getOneProduct)
 
 module.exports = router;
