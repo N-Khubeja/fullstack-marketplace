@@ -662,6 +662,51 @@ if (!productUpdated && uploadedPublicIds.length > 0) {
 
 }
 
+async function deleteProduct(req,res){
+    const user = req.user
+    const slug = req.params.slug
+
+  try {
+
+  const product = await Product.findOne({slug})
+
+  if (!product || !product.author.equals(user._id)){
+    return res.status(404).json({
+      message: "Product not found"
+    })
+  }
+
+    const productDelete = await Product.findByIdAndDelete(product._id)
+
+    if(!productDelete){
+      return res.status(404).json({
+        message: "Product not found"
+       })
+    }
+
+    const images = product.images ?? []
+    const productImageIds = images.map((img) => img.publicId)
+
+    await Promise.allSettled(
+    productImageIds.map((id) =>
+      cloudinary.uploader.destroy(id)
+    )
+  )
+
+  return res.status(200).json({
+    message:"Product deleted successfully"
+  })
+    
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      message:"failed to delete product"
+    })
+  }
+
+}
+
 
 
 module.exports = {
@@ -669,5 +714,6 @@ module.exports = {
   getOneProduct,
   createProduct,
   getMyProducts,
-  updateProduct
+  updateProduct,
+  deleteProduct
 };
