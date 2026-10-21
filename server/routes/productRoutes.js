@@ -7,7 +7,10 @@ const {
   createProduct,
   getMyProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getFavoriteProducts,
+  toggleFavProduct
+  
 } = require("../controllers/productController");
 
 const authMiddleware = require("../middlewares/authMiddleware")
@@ -20,7 +23,11 @@ router.get("/", getAllProducts);
 router.post("/create",authMiddleware,uploadProdMiddleware.array("images", 5),parseProductAttributes,UploadProduct,handleValidationErrors, createProduct);
 router.get("/my",authMiddleware,getMyProducts)
 router.patch("/update/:slug",authMiddleware,uploadProdMiddleware.array("images", 5),parseProductAttributes,UpdateProductVal,handleValidationErrors,updateProduct)
-router.get("/:slug",getOneProduct)
+
 router.delete("/delete/:slug",authMiddleware,deleteProduct)
+router.get("/get-favorites",authMiddleware,getFavoriteProducts)
+router.post("/toggle-favorite-prod",authMiddleware,toggleFavProduct)
+
+router.get("/:slug",getOneProduct)
 
 module.exports = router;

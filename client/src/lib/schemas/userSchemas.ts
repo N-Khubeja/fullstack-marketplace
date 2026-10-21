@@ -1,24 +1,5 @@
 import z from "zod";
 
-// export const passwordchangechema = z.object({
-//     oldPassword:z.string()
-//     .min(1,"password is required"),
-    
-//     newPassword:z
-//     .string()
-//     .min(1, "oldPassword is required")
-//     .min(8, "Minimum 8 characters")
-//     .regex(/[A-Z]/, "Must contain uppercase letter")
-//     .regex(/[0-9]/, "Must contain number"),
-
-//     configPassword:z
-//     .string()
-//     .min(1, "oldPassword is required")
-//     .min(8, "Minimum 8 characters")
-//     .regex(/[A-Z]/, "Must contain uppercase letter")
-//     .regex(/[0-9]/, "Must contain number"),
-
-// })
 
 export const passwordchangechema = z.object({
     oldPassword: z.string().min(1, "Password is required"),

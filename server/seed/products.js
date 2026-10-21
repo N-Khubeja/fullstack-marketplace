@@ -1,31 +1,33 @@
-const products = [
-  {
-    name: "iPhone 17 Pro",
-    slug: "iphone-17-pro",
-    description: "Premium smartphone",
-    price: 1499,
-    category: "electronics",
-    subcategory: "phones",
-    stock: 10,
-    images: [],
-    author: null,
-    visibility: "public",
-    isActive: true
-  },
+const products = Array.from(
+  { length: 55 },
+  (_, index) => {
+    const number = index + 1
 
-  {
-    name: "MacBook Pro 14",
-    slug: "macbook-pro-14",
-    description: "Professional laptop",
-    price: 2199,
-    category: "electronics",
-    subcategory: "laptops",
-    stock: 5,
-    images: [],
-    author: null,
-    visibility: "public",
-    isActive: true
+    return {
+      name: `Test T-Shirt ${number}`,
+      slug: `test-tshirt-${number}`,
+      description:
+        `Test marketplace product number ${number}`,
+      price: 20 + number,
+      category: "clothing",
+      subcategory: "tshirts",
+      stock: 5 + number,
+      attributes: {
+        size: ["S", "M", "L", "XL"][index % 4],
+        color: [
+          "Black",
+          "White",
+          "Blue",
+          "Green"
+        ][index % 4],
+        material: "Cotton"
+      },
+      images: [],
+      author: null,
+      visibility: "public",
+      isActive: true
+    }
   }
-]
+)
 
 module.exports = products

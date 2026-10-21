@@ -3,6 +3,7 @@ const cloudinary = require("../config/cloudinary")
 const streamifier = require("streamifier") 
 const mongoose = require("mongoose");
 const PRODUCT_CATEGORIES = require("../constants/Categories");
+const SavedProducts = require("../models/SavedProducts")
 
 async function getAllProducts(req, res) {
 
@@ -31,8 +32,9 @@ const maxPrice =
     const skip = (page-1)*limit
 
     let sort = {
-      createdAt:-1
-    }
+  createdAt: -1,
+  _id: -1
+}
 
     const allowedSortFields = ["price","name","createdAt"]
 
@@ -707,6 +709,236 @@ async function deleteProduct(req,res){
 
 }
 
+async function getFavoriteProducts(req,res){
+
+  try {
+    const products = await SavedProducts.find({
+      user:req.user._id
+    }).populate("product")
+
+    if(products.length === 0){
+      return res.status(200).json({
+  message: "No favorite products",
+  products: []
+})
+    }
+
+    return res.status(200).json({
+      message:"get products successfully",
+      products
+    })
+
+
+  } catch (error) {
+    console.log(error)
+     return res.status(500).json({message:"cant find the products"})
+  }
+
+
+}
+
+async function toggleFavProduct(req,res){
+  try {
+   const product = await SavedProducts.findOne({
+  user: req.user._id,
+  product: req.body.id
+});
+
+    if(product){
+      await SavedProducts.deleteOne({
+  _id: product._id
+})
+      return res.status(200).json({message:"deleted"})
+    } else  {
+      const result = await SavedProducts.create({
+        user: req.user._id,
+        product: req.body.id
+      })  
+
+      await result.populate("product")
+
+      return res.status(200).json({
+        message:"created",
+        result
+      })
+    }
+ 
+
+  } catch (error) {
+    console.log(error)
+     return res.status(500).json({
+  message: "Something went wrong"
+})
+  }
+}
+
+
+
+// async function getAllProducts(req, res) {
+//   try {
+//     const page = Math.max(
+//       Number(req.query.page) || 1,
+//       1
+//     )
+
+//     const limit = Math.min(
+//       Math.max(
+//         Number(req.query.limit) || 20,
+//         1
+//       ),
+//       100
+//     )
+
+//     const search = req.query.search
+//     const category = req.query.category
+//     const subcategory = req.query.subcategory
+
+//     const minPrice =
+//       req.query.minPrice !== undefined
+//         ? Number(req.query.minPrice)
+//         : NaN
+
+//     const maxPrice =
+//       req.query.maxPrice !== undefined
+//         ? Number(req.query.maxPrice)
+//         : NaN
+
+//     const sortBy = req.query.sortBy
+//     const order = req.query.order
+
+//     const skip = (page - 1) * limit
+
+//     let sort = {
+//       createdAt: -1,
+//       _id: -1
+//     }
+
+//     const allowedSortFields = [
+//       "price",
+//       "name",
+//       "createdAt"
+//     ]
+
+//     const filters = {
+//       isActive: true,
+//       visibility: "public"
+//     }
+
+//     if (search) {
+//       filters.name = {
+//         $regex: search,
+//         $options: "i"
+//       }
+//     }
+
+//     if (category) {
+//       filters.category = category
+//     }
+
+//     if (subcategory) {
+//       filters.subcategory = subcategory
+//     }
+
+//     if (
+//       !Number.isNaN(minPrice) ||
+//       !Number.isNaN(maxPrice)
+//     ) {
+//       filters.price = {}
+
+//       if (!Number.isNaN(minPrice)) {
+//         filters.price.$gte = minPrice
+//       }
+
+//       if (!Number.isNaN(maxPrice)) {
+//         filters.price.$lte = maxPrice
+//       }
+//     }
+
+//     if (
+//       sortBy &&
+//       allowedSortFields.includes(sortBy)
+//     ) {
+//       sort = {
+//         [sortBy]:
+//           order === "asc" ? 1 : -1,
+//         _id: -1
+//       }
+//     }
+
+//     const [totalProducts, products] =
+//       await Promise.all([
+//         Product.countDocuments(filters),
+
+//         Product.find(filters)
+//           .sort(sort)
+//           .skip(skip)
+//           .limit(limit)
+//       ])
+
+//     let productsResponse =
+//       products.map((product) => ({
+//         ...product.toObject(),
+//         isSaved: false
+//       }))
+
+//     if (req.user) {
+//       const productIds =
+//         products.map(
+//           (product) => product._id
+//         )
+
+//       const savedProducts =
+//         await SavedProducts.find({
+//           user: req.user._id,
+
+//           product: {
+//             $in: productIds
+//           }
+//         }).select("product")
+
+//       const savedIds = new Set(
+//         savedProducts.map(
+//           (item) =>
+//             item.product.toString()
+//         )
+//       )
+
+//       productsResponse =
+//         products.map((product) => ({
+//           ...product.toObject(),
+
+//           isSaved: savedIds.has(
+//             product._id.toString()
+//           )
+//         }))
+//     }
+
+//     const totalPages =
+//       Math.ceil(
+//         totalProducts / limit
+//       )
+
+//     return res.status(200).json({
+//       products: productsResponse,
+
+//       pagination: {
+//         page,
+//         limit,
+//         totalProducts,
+//         totalPages
+//       }
+//     })
+//   } catch (error) {
+//     console.error(
+//       "Get products error:",
+//       error
+//     )
+
+//     return res.status(500).json({
+//       message: "Something went wrong"
+//     })
+//   }
+// }
 
 
 module.exports = {
@@ -715,5 +947,7 @@ module.exports = {
   createProduct,
   getMyProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getFavoriteProducts,
+  toggleFavProduct,
 };
