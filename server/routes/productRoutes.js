@@ -9,8 +9,10 @@ const {
   updateProduct,
   deleteProduct,
   getFavoriteProducts,
-  toggleFavProduct
-  
+  toggleFavProduct,
+  getCart,
+  addProductInCart,
+  deleteProductInCart 
 } = require("../controllers/productController");
 
 const authMiddleware = require("../middlewares/authMiddleware")
@@ -27,7 +29,11 @@ router.patch("/update/:slug",authMiddleware,uploadProdMiddleware.array("images",
 router.delete("/delete/:slug",authMiddleware,deleteProduct)
 router.get("/get-favorites",authMiddleware,getFavoriteProducts)
 router.post("/toggle-favorite-prod",authMiddleware,toggleFavProduct)
+router.get("/cart-products",authMiddleware,getCart)
+router.post("/add-cart-products",authMiddleware,addProductInCart)
+router.delete("/delete-cart-product",authMiddleware,deleteProductInCart)
 
 router.get("/:slug",getOneProduct)
+
 
 module.exports = router;

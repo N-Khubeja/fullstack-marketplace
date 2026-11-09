@@ -4,6 +4,7 @@ const streamifier = require("streamifier")
 const mongoose = require("mongoose");
 const PRODUCT_CATEGORIES = require("../constants/Categories");
 const SavedProducts = require("../models/SavedProducts")
+const Cart = require("../models/Cart")
 
 async function getAllProducts(req, res) {
 
@@ -781,173 +782,188 @@ async function toggleFavProduct(req,res){
   }
 }
 
+async function getCart(req, res) {
+  try {
+    const user = req.user
 
+    const cart = await Cart.findOne({
+      userId: user._id
+    }).populate({
+      path: "items.productId",
+      match: {
+        isActive: true,
+        visibility: "public"
+      }
+    })
 
-// async function getAllProducts(req, res) {
-//   try {
-//     const page = Math.max(
-//       Number(req.query.page) || 1,
-//       1
-//     )
+    if (!cart) {
+      return res.status(200).json({
+        message: "Cart is empty",
+        cartProducts: []
+      })
+    }
 
-//     const limit = Math.min(
-//       Math.max(
-//         Number(req.query.limit) || 20,
-//         1
-//       ),
-//       100
-//     )
+    const availableProducts =
+      cart.items.filter(
+        item => item.productId !== null
+      )
 
-//     const search = req.query.search
-//     const category = req.query.category
-//     const subcategory = req.query.subcategory
+    return res.status(200).json({
+      message:
+        "Cart products fetched successfully",
+      cartProducts: availableProducts
+    })
 
-//     const minPrice =
-//       req.query.minPrice !== undefined
-//         ? Number(req.query.minPrice)
-//         : NaN
+  } catch (error) {
+    console.error(error)
 
-//     const maxPrice =
-//       req.query.maxPrice !== undefined
-//         ? Number(req.query.maxPrice)
-//         : NaN
+    return res.status(500).json({
+      message:
+        "Cannot get cart products"
+    })
+  }
+}
 
-//     const sortBy = req.query.sortBy
-//     const order = req.query.order
+async function addProductInCart(req, res) {
+  try {
+    const user = req.user
+    const { productId } = req.body
 
-//     const skip = (page - 1) * limit
+    const product = await Product.findOne({
+      _id: productId,
+      isActive: true,
+      visibility: "public"
+    })
 
-//     let sort = {
-//       createdAt: -1,
-//       _id: -1
-//     }
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found or unavailable"
+      })
+    }
 
-//     const allowedSortFields = [
-//       "price",
-//       "name",
-//       "createdAt"
-//     ]
+    if (product.stock <= 0) {
+      return res.status(400).json({
+        message: "Product is out of stock"
+      })
+    }
 
-//     const filters = {
-//       isActive: true,
-//       visibility: "public"
-//     }
+    let cart
 
-//     if (search) {
-//       filters.name = {
-//         $regex: search,
-//         $options: "i"
-//       }
-//     }
+    const existsInCart = await Cart.findOne({
+      userId: user._id,
+      "items.productId": productId
+    })
 
-//     if (category) {
-//       filters.category = category
-//     }
+    if (existsInCart) {
+      const cartItem = existsInCart.items.find(
+        (item) =>
+          item.productId.toString() === productId
+      )
 
-//     if (subcategory) {
-//       filters.subcategory = subcategory
-//     }
+      if (cartItem.quantity >= product.stock) {
+        return res.status(400).json({
+          message:
+            "Cannot add more than available stock"
+        })
+      }
 
-//     if (
-//       !Number.isNaN(minPrice) ||
-//       !Number.isNaN(maxPrice)
-//     ) {
-//       filters.price = {}
+      cart = await Cart.findOneAndUpdate(
+        {
+          userId: user._id,
+          "items.productId": productId
+        },
+        {
+          $inc: {
+            "items.$.quantity": 1
+          }
+        },
+        {
+          new: true
+        }
+      )
+    } else {
+      cart = await Cart.findOneAndUpdate(
+        {
+          userId: user._id
+        },
+        {
+          $push: {
+            items: {
+              productId,
+              quantity: 1
+            }
+          }
+        },
+        {
+          new: true,
+          upsert: true
+        }
+      )
+    }
 
-//       if (!Number.isNaN(minPrice)) {
-//         filters.price.$gte = minPrice
-//       }
+    return res.status(200).json({
+      message: "Product added to cart",
+      cart
+    })
 
-//       if (!Number.isNaN(maxPrice)) {
-//         filters.price.$lte = maxPrice
-//       }
-//     }
+  } catch (error) {
+    console.error(error)
 
-//     if (
-//       sortBy &&
-//       allowedSortFields.includes(sortBy)
-//     ) {
-//       sort = {
-//         [sortBy]:
-//           order === "asc" ? 1 : -1,
-//         _id: -1
-//       }
-//     }
+    return res.status(500).json({
+      message: "Cannot add product to cart"
+    })
+  }
+}
 
-//     const [totalProducts, products] =
-//       await Promise.all([
-//         Product.countDocuments(filters),
+async function deleteProductInCart(
+  req,
+  res
+) {
+  try {
+    const user = req.user
+    const { productId } = req.body
 
-//         Product.find(filters)
-//           .sort(sort)
-//           .skip(skip)
-//           .limit(limit)
-//       ])
+    const cart =
+      await Cart.findOneAndUpdate(
+        {
+          userId: user._id,
+          "items.productId": productId
+        },
+        {
+          $pull: {
+            items: {
+              productId
+            }
+          }
+        },
+        {
+          new: true
+        }
+      )
 
-//     let productsResponse =
-//       products.map((product) => ({
-//         ...product.toObject(),
-//         isSaved: false
-//       }))
+    if (!cart) {
+      return res.status(404).json({
+        message:
+          "Product not found in cart"
+      })
+    }
 
-//     if (req.user) {
-//       const productIds =
-//         products.map(
-//           (product) => product._id
-//         )
+    return res.status(200).json({
+      message:
+        "Product removed from cart",
+      cart
+    })
 
-//       const savedProducts =
-//         await SavedProducts.find({
-//           user: req.user._id,
+  } catch (error) {
+    console.error(error)
 
-//           product: {
-//             $in: productIds
-//           }
-//         }).select("product")
+    return res.status(500).json({
+      message:
+        "Cannot remove product from cart"
+    })
+  }
+}
 
-//       const savedIds = new Set(
-//         savedProducts.map(
-//           (item) =>
-//             item.product.toString()
-//         )
-//       )
-
-//       productsResponse =
-//         products.map((product) => ({
-//           ...product.toObject(),
-
-//           isSaved: savedIds.has(
-//             product._id.toString()
-//           )
-//         }))
-//     }
-
-//     const totalPages =
-//       Math.ceil(
-//         totalProducts / limit
-//       )
-
-//     return res.status(200).json({
-//       products: productsResponse,
-
-//       pagination: {
-//         page,
-//         limit,
-//         totalProducts,
-//         totalPages
-//       }
-//     })
-//   } catch (error) {
-//     console.error(
-//       "Get products error:",
-//       error
-//     )
-
-//     return res.status(500).json({
-//       message: "Something went wrong"
-//     })
-//   }
-// }
 
 
 module.exports = {
@@ -959,4 +975,7 @@ module.exports = {
   deleteProduct,
   getFavoriteProducts,
   toggleFavProduct,
+  getCart,
+  addProductInCart,
+  deleteProductInCart
 };
