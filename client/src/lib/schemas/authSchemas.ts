@@ -16,9 +16,18 @@ export const registerSchema = z.object({
         .min(1, "Email is required")
         .email("Invalid email"),
     password: z.string()
-        .min(8, "Minimum 8 characters")
-        .regex(/[A-Z]/, "Must contain uppercase letter")
-        .regex(/[0-9]/, "Must contain number")
+    .min(8, "Minimum 8 characters")
+    .refine(
+        value => new TextEncoder().encode(value).length <= 72,
+        "Password is too long"
+    )
+    .regex(/[A-Z]/, "Must contain uppercase letter")
+    .regex(/[a-z]/, "Must contain lowercase letter")
+    .regex(/[0-9]/, "Must contain number")
+    .regex(
+        /[!@#$%^&*(),.?":{}|<>]/,
+        "Must contain special character"
+    )
 })
 
 export const forgetPasswordSchema = z.object({
@@ -28,10 +37,19 @@ export const forgetPasswordSchema = z.object({
 })
 
 export const resetPasswordSchema = z.object({
-    newPassword: z.string()
-        .min(8, "Minimum 8 characters")
-        .regex(/[A-Z]/, "Must contain uppercase letter")
-        .regex(/[0-9]/, "Must contain number"),
+   newPassword: z.string()
+    .min(8, "Minimum 8 characters")
+    .refine(
+        value => new TextEncoder().encode(value).length <= 72,
+        "Password is too long"
+    )
+    .regex(/[A-Z]/, "Must contain uppercase letter")
+    .regex(/[a-z]/, "Must contain lowercase letter")
+    .regex(/[0-9]/, "Must contain number")
+    .regex(
+        /[!@#$%^&*(),.?":{}|<>]/,
+        "Must contain special character"
+    ),
     
         confirmPassword: z.string()
         .min(1, "Please confirm password")

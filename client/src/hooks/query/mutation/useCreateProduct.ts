@@ -11,7 +11,7 @@ const useCreateProduct = () => {
         mutationFn:({data,image}:{data:ProductSchema,image:File[]}) => createProduct({data,image}),
         onError:(err) => console.log(err),
         onSuccess:() => {
-            queryClient.invalidateQueries({queryKey:["Products"]})
+            queryClient.invalidateQueries({queryKey:["products"]})
         }
     })
 

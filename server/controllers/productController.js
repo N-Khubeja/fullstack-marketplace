@@ -709,32 +709,41 @@ async function deleteProduct(req,res){
 
 }
 
-async function getFavoriteProducts(req,res){
-
+async function getFavoriteProducts(req, res) {
   try {
     const products = await SavedProducts.find({
-      user:req.user._id
-    }).populate("product")
+      user: req.user._id
+    }).populate({
+      path: "product",
+      match: {
+        isActive: true,
+        visibility: "public"
+      }
+    })
 
-    if(products.length === 0){
+    const availableProducts = products.filter(
+      item => item.product !== null
+    )
+
+    if (availableProducts.length === 0) {
       return res.status(200).json({
-  message: "No favorite products",
-  products: []
-})
+        message: "No favorite products",
+        products: []
+      })
     }
 
     return res.status(200).json({
-      message:"get products successfully",
-      products
+      message: "get products successfully",
+      products: availableProducts
     })
-
 
   } catch (error) {
     console.log(error)
-     return res.status(500).json({message:"cant find the products"})
+
+    return res.status(500).json({
+      message: "cant find the products"
+    })
   }
-
-
 }
 
 async function toggleFavProduct(req,res){

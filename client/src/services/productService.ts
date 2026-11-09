@@ -96,7 +96,7 @@ export const updateProduct = async ({data,image,keepImageId,slug}:IupdateProduct
   JSON.stringify(keepImageId)
 )
 
-    const result = await api.patch(`/update/${slug}`,
+    const result = await api.patch(`/product/update/${slug}`,
         formData,
     )
 

@@ -1,7 +1,7 @@
 const { body, validationResult } = require("express-validator")
 
 const PRODUCT_CATEGORIES = require("../constants/Categories")
-PRODUCT_ATTRIBUTE_RULES = require("../constants/productAttributeRules")
+const PRODUCT_ATTRIBUTE_RULES = require("../constants/productAttributeRules")
 
 const LoginValidation = [
     body("email")
@@ -37,6 +37,13 @@ const RegisterValidation = [
         .withMessage("Password is required")
         .isLength({ min: 8, max: 100 })
         .withMessage("Password must be between 8 and 100 characters")
+        .custom((value) => {
+            if (Buffer.byteLength(value, "utf8") > 72) {
+                throw new Error("Password is too long")
+            }
+
+            return true
+        })
         .matches(/[A-Z]/)
         .withMessage("Must contain uppercase letter")
         .matches(/[a-z]/)
@@ -56,6 +63,13 @@ const PasswordChangeValidation = [
         .notEmpty()
         .withMessage("Password is required")
         .isLength({ min: 8, max: 100 })
+        .custom((value) => {
+    if (Buffer.byteLength(value, "utf8") > 72) {
+        throw new Error("Password is too long")
+    }
+
+    return true
+})
         .withMessage("Password must be between 8 and 100 characters")
         .matches(/[A-Z]/)
         .withMessage("Must contain uppercase letter")
@@ -115,6 +129,13 @@ const ResetPassword = [
         .withMessage("Password is required")
         .isLength({ min: 8, max: 100 })
         .withMessage("Password must be between 8 and 100 characters")
+        .custom((value) => {
+    if (Buffer.byteLength(value, "utf8") > 72) {
+        throw new Error("Password is too long")
+    }
+
+    return true
+})
         .matches(/[A-Z]/)
         .withMessage("Must contain uppercase letter")
         .matches(/[a-z]/)

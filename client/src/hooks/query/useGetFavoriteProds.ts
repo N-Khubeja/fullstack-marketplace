@@ -21,12 +21,15 @@ import {  useQuery } from "@tanstack/react-query"
 
 const useGetFavoriteProds = () => {
 
-  const user = useStoreAuth((s) => s.user)
+  const userId = useStoreAuth(
+  state => state.user?.id
+)
+
 
   const result = useQuery({
-    queryKey:['favorite-products'],
+    queryKey:['favorite-products', userId],
     queryFn:getFavoriteProducts,
-    enabled:!!user
+    enabled:!!userId
 
 
   })

@@ -121,7 +121,6 @@ import { getProducts, IProductProps } from "@/services/productService"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { useSearchParams } from "next/navigation"
 import ProductList from "./ProductList"
-import { useEffect, useRef } from "react"
 
 export default function ProductListQuery() {
 
