@@ -76,26 +76,32 @@
 
 import { IsingleFavProd } from "@/components/ProductList";
 import { IProduct, ToggleFavorite } from "@/services/productService";
+import { useStoreAuth } from "@/store/useStoreAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const useToggleProduct = () => {
   const queryClient = useQueryClient();
+
+  const userId = useStoreAuth(
+  state => state.user?.id
+)
+
 
   return useMutation({
     mutationFn: ({ id }:{id:string,product:IProduct}) => ToggleFavorite(id),
 
     onMutate: async ({ id, product }:{id:string,product:IProduct}) => {
   await queryClient.cancelQueries({
-    queryKey: ["favorite-products"]
+    queryKey: ["favorite-products",userId]
   })
 
   const previousData =
     queryClient.getQueryData<IsingleFavProd[]>(
-      ["favorite-products"]
+      ["favorite-products",userId]
     )
 
   queryClient.setQueryData<IsingleFavProd[]>(
-    ["favorite-products"],
+    ["favorite-products",userId],
     (oldData = []) => {
       const exists = oldData.some(
         item => item.product._id === id
@@ -124,7 +130,7 @@ const useToggleProduct = () => {
     onError: (_error, _id, context) => {
       if (context?.previousData !== undefined) {
         queryClient.setQueryData(
-          ["favorite-products"],
+          ["favorite-products",userId],
           context.previousData
         );
       }
@@ -133,7 +139,7 @@ const useToggleProduct = () => {
 onSuccess: (data, variables) => {
   if (data.result) {
     queryClient.setQueryData<IsingleFavProd[]>(
-      ["favorite-products"],
+      ["favorite-products",userId],
       (oldData = []) =>
         oldData.map(item =>
           item.product._id === variables.id

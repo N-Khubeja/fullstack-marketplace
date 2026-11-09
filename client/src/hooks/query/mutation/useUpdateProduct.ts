@@ -12,7 +12,7 @@ const useUpdateProduct = () => {
         mutationFn:({data,image,keepImageId,slug}:IupdateProduct) => updateProduct({data,image,keepImageId,slug}),
         onError:(err) => console.log(err),
         onSuccess:() => {
-            queryClient.invalidateQueries({queryKey:["Products"]})
+            queryClient.invalidateQueries({queryKey:["products"]})
         }
     })
 

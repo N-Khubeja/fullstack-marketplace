@@ -1,30 +1,67 @@
-import { NextRequest, NextResponse } from "next/server"
+// import { NextRequest, NextResponse } from "next/server"
 
 
-const protectedRoutes = ["/dashboard", "/profile", "/settings"]
-const authRoutes = ["/login", "/register"]
+// const protectedRoutes = ["/dashboard", "/profile", "/settings"]
+// const authRoutes = ["/login", "/register"]
+
+// export function middleware(req: NextRequest) {
+//     const { pathname } = req.nextUrl
+//     const refreshToken = req.cookies.get("refreshToken")?.value
+
+//     const isProtected = protectedRoutes.some((r) => pathname.startsWith(r))
+//     const isAuthRoute = authRoutes.some((r) => pathname.startsWith(r))
+
+//     if (isProtected && !refreshToken) {
+//         return NextResponse.redirect(new URL("/login", req.url))
+//     }
+
+//     if (isAuthRoute && refreshToken) {
+//         return NextResponse.redirect(new URL("/dashboard", req.url))
+//     }
+
+//     return NextResponse.next()
+// }
+
+// export const config = {
+//     matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"]
+// }
+
+
+
+import {
+  NextRequest,
+  NextResponse
+} from "next/server"
+
+const protectedRoutes = [
+  "/profile"
+]
 
 export function middleware(req: NextRequest) {
-    const { pathname } = req.nextUrl
-    const refreshToken = req.cookies.get("refreshToken")?.value
+  const { pathname } = req.nextUrl
 
-    const isProtected = protectedRoutes.some((r) => pathname.startsWith(r))
-    const isAuthRoute = authRoutes.some((r) => pathname.startsWith(r))
+  const refreshToken =
+    req.cookies.get("refreshToken")?.value
 
-    if (isProtected && !refreshToken) {
-        return NextResponse.redirect(new URL("/login", req.url))
-    }
+  const isProtected =
+    protectedRoutes.some(route =>
+      pathname.startsWith(route)
+    )
 
-    if (isAuthRoute && refreshToken) {
-        return NextResponse.redirect(new URL("/dashboard", req.url))
-    }
+  if (
+    isProtected &&
+    !refreshToken
+  ) {
+    return NextResponse.redirect(
+      new URL("/login", req.url)
+    )
+  }
 
-    return NextResponse.next()
+  return NextResponse.next()
 }
 
 export const config = {
-    matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"]
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|api).*)"
+  ]
 }
-
-
-

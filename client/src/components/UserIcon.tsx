@@ -2,6 +2,7 @@
 
 import { Logout } from "@/services/authService"
 import { Iuser, useStoreAuth } from "@/store/useStoreAuth"
+import { useQueryClient } from "@tanstack/react-query"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -17,12 +18,20 @@ export default function UserIcon({user}:Props) {
     const [open,setOpen] = useState<boolean>(false)
     const refDiv = useRef<HTMLDivElement | null>(null)
 
-    const submit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault()
+    const queryClient = useQueryClient()
 
+    const submit = async () => {
+      try {
         await Logout()
+      } catch (error) {
+        console.log(error)
+      } finally {
+        queryClient.removeQueries({
+          queryKey: ["favorite-products",user.id]
+        })
         clear()
-        router.push('/')
+        router.replace("/")
+      }
     }
 
  useEffect(() => {

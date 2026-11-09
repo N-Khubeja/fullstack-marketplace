@@ -1,9 +1,7 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User")
-
-
 // const jwt = require("jsonwebtoken");
-// const User = require("../models/User");
+// const User = require("../models/User")
+
+
 
 // const authMiddleware = async (req, res, next) => {
 //   try {
@@ -54,33 +52,105 @@ const User = require("../models/User")
 // module.exports = authMiddleware;
 
 
+// const jwt = require("jsonwebtoken");
+// const User = require("../models/User");
 
-const authMiddleware =  async (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
+// const authMiddleware =  async (req, res, next) => {
+//     try {
+//         const authHeader = req.headers.authorization;
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({ message: "No token provided" });
-        }
+//         if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//             return res.status(401).json({ message: "No token provided" });
+//         }
 
-        const token = authHeader.split(" ")[1];
+//         const token = authHeader.split(" ")[1];
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // const user = await User.findById(decoded.id).select("-password")
-        const user = await User.findById(decoded.id).select("-password -refreshTokens")
+//         const user = await User.findById(decoded.id).select("-password")
 
-        if(!user){
-            return res.status(401).json({message:"user not found"})
-        }
+//         if(!user){
+//             return res.status(401).json({message:"user not found"})
+//         }
 
-        req.user = user;
+//         const sessionExists = user.refreshTokens.some((token) => token.sessionId === decoded.sessionId)
 
-        next();
+//         if(!sessionExists){
+//             return res.status(401).json({
+//                 message: "Session expired"
+//             })
+//         }
 
-    } catch (error) {
-        return res.status(401).json({ message: "Invalid or expired token" });
+//         req.user = user;
+
+//         next();
+
+//     } catch (error) {
+//         return res.status(401).json({ message: "Invalid or expired token" });
+//     }
+// };
+
+const jwt = require("jsonwebtoken")
+const User = require("../models/User")
+
+const authMiddleware = async (req, res, next) => {
+  try {
+    const authHeader =
+      req.headers.authorization
+
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ")
+    ) {
+      return res.status(401).json({
+        code: "NO_ACCESS_TOKEN",
+        message: "Authentication required"
+      })
     }
-};
 
-module.exports = authMiddleware;
+    const token =
+      authHeader.split(" ")[1]
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    )
+
+    const user = await User.findOne({
+      _id: decoded.id,
+
+      "refreshTokens.sessionId":
+        decoded.sessionId
+    }).select(
+      "_id name email role icon"
+    )
+
+    if (!user) {
+      return res.status(401).json({
+        code: "SESSION_EXPIRED",
+        message: "Session expired"
+      })
+    }
+
+    req.user = user
+
+    next()
+
+  } catch (error) {
+
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        code: "ACCESS_TOKEN_EXPIRED",
+        message: "Access token expired"
+      })
+    }
+
+    return res.status(401).json({
+      code: "INVALID_ACCESS_TOKEN",
+      message: "Invalid access token"
+    })
+  }
+}
+
+module.exports = authMiddleware
+

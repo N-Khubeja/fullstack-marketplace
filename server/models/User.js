@@ -12,6 +12,10 @@ const refreshTokenSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    sessionId: {
+        type: String,
+        required: true
     }
 })
 
@@ -56,7 +60,8 @@ const userSchema = new mongoose.Schema({
     passwordResetExpires: {
         type: Date,
         default: null,
-    }
+    },
+
 })
 
 module.exports = mongoose.model("User",userSchema)
